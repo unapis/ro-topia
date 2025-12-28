@@ -2,11 +2,11 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>ロートピア サービスアプリ</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     
@@ -24,65 +24,80 @@
     }
     
     html, body {
-      font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
-      background: linear-gradient(180deg, #E5E5EA 0%, #D1D1D6 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+      background: #F2F2F7;
       min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px 0;
+      min-height: -webkit-fill-available;
+      margin: 0;
+      padding: 0;
     }
     
-    /* iPhone Frame */
+    /* PC表示時はiPhoneフレーム */
+    @media (min-width: 421px) {
+      html, body {
+        background: linear-gradient(180deg, #E5E5EA 0%, #D1D1D6 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px 0;
+      }
+    }
+    
+    /* iPhone Frame - PCのみ */
     .iphone-frame {
       position: relative;
-      width: 390px;
-      height: 844px;
-      background: #1C1C1E;
-      border-radius: 55px;
-      padding: 12px;
-      box-shadow: 
-        0 50px 100px -20px rgba(0,0,0,0.25),
-        0 30px 60px -30px rgba(0,0,0,0.3),
-        inset 0 0 0 2px rgba(255,255,255,0.1);
+      width: 100%;
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      background: transparent;
     }
     
-    .iphone-frame::before {
-      content: '';
-      position: absolute;
-      top: 12px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 126px;
-      height: 37px;
-      background: #1C1C1E;
-      border-radius: 20px;
-      z-index: 1000;
+    @media (min-width: 421px) {
+      .iphone-frame {
+        width: 390px;
+        height: 844px;
+        min-height: 844px;
+        background: #1C1C1E;
+        border-radius: 55px;
+        padding: 12px;
+        box-shadow: 
+          0 50px 100px -20px rgba(0,0,0,0.25),
+          0 30px 60px -30px rgba(0,0,0,0.3),
+          inset 0 0 0 2px rgba(255,255,255,0.1);
+      }
+      
+      .iphone-frame::before {
+        content: '';
+        position: absolute;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 126px;
+        height: 37px;
+        background: #1C1C1E;
+        border-radius: 20px;
+        z-index: 1000;
+      }
     }
     
     .app-container {
       width: 100%;
       height: 100%;
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
       background: var(--background);
-      border-radius: 44px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       position: relative;
     }
     
-    @media (max-width: 420px) {
-      html, body { padding: 0; background: var(--background); }
-      .iphone-frame {
-        width: 100%;
-        height: 100vh;
-        border-radius: 0;
-        padding: 0;
-        background: transparent;
-        box-shadow: none;
+    @media (min-width: 421px) {
+      .app-container {
+        min-height: auto;
+        height: 100%;
+        border-radius: 44px;
       }
-      .iphone-frame::before { display: none; }
-      .app-container { border-radius: 0; }
     }
     
     /* Status Bar */
@@ -1704,79 +1719,79 @@
       "salesbook-2wd": {
         title: "セールスブック均等払い【2WD】",
         pages: [
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/WvjkcEjrMgtrRwbe.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/NLGQkHhhtRwWGuGX.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/HTKuPUZzCZCGlWoq.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/MYHztLscbUcpGBrC.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/reJmwEbxJpMxSKMg.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/FlGzzOMzPoomwQIe.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/fanmlavgPcRRmaGL.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/YWiDxYSIjGriAFtb.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/zYUqlbYuXEZeDQGy.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/MJztgMbyFVkXmhFJ.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/msMUBvQEWpYZUchv.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/xGojZyAmZVPConti.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/alQqBhjFRvGRsOAr.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/vbuKUYIDzFUfhbmB.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/zSmzbOfudXuvwCYo.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/krbQIQpFmwmooZNS.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/SsaJzibSLaqDCUEV.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/ndPhzXiAzGTVKxsU.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/nKCCqIQKzCZcmdQw.png"
+          "images/salesbook-2wd/01.png",
+          "images/salesbook-2wd/02.png",
+          "images/salesbook-2wd/03.png",
+          "images/salesbook-2wd/04.png",
+          "images/salesbook-2wd/05.png",
+          "images/salesbook-2wd/06.png",
+          "images/salesbook-2wd/07.png",
+          "images/salesbook-2wd/08.png",
+          "images/salesbook-2wd/09.png",
+          "images/salesbook-2wd/10.png",
+          "images/salesbook-2wd/11.png",
+          "images/salesbook-2wd/12.png",
+          "images/salesbook-2wd/13.png",
+          "images/salesbook-2wd/14.png",
+          "images/salesbook-2wd/15.png",
+          "images/salesbook-2wd/16.png",
+          "images/salesbook-2wd/17.png",
+          "images/salesbook-2wd/18.png",
+          "images/salesbook-2wd/19.png"
         ]
       },
       "salesbook-4wd": {
         title: "セールスブック均等払い【4WD】",
         pages: [
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/wNxpdCtbAgxnhlnL.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/KEKUQUeabEiDWWgp.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/hSqmpVBVDGspIWlB.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/EidHYcVvRfdANzdh.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/bGrYnNoSnwusWrWj.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/RSNdJGWDdKHaoEUl.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/xoDEdmYKOknQKnfo.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/LTKbyHfWampCdzSP.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/FRhuhRKPQxPMJzHH.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/sYuZjiBTaiSRstDX.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/FewRpkGuXRcXDdlg.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/mxDPIMbvUQOIDdht.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/EbacnzJHjJrHuzFa.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/rrWwKxlIqyuscxQd.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/yxvCfRlDceWzkOIG.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/YFqliOqtCsRQrlBn.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/EokPOSCShvCfSfTK.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/FwqmoohiaCXARTiw.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/WDEOPplAHyCctsek.png"
+          "images/salesbook-4wd/01.png",
+          "images/salesbook-4wd/02.png",
+          "images/salesbook-4wd/03.png",
+          "images/salesbook-4wd/04.png",
+          "images/salesbook-4wd/05.png",
+          "images/salesbook-4wd/06.png",
+          "images/salesbook-4wd/07.png",
+          "images/salesbook-4wd/08.png",
+          "images/salesbook-4wd/09.png",
+          "images/salesbook-4wd/10.png",
+          "images/salesbook-4wd/11.png",
+          "images/salesbook-4wd/12.png",
+          "images/salesbook-4wd/13.png",
+          "images/salesbook-4wd/14.png",
+          "images/salesbook-4wd/15.png",
+          "images/salesbook-4wd/16.png",
+          "images/salesbook-4wd/17.png",
+          "images/salesbook-4wd/18.png",
+          "images/salesbook-4wd/19.png"
         ]
       },
       "salesbook-text-2wd": {
         title: "セールスブック文言【2WD】",
         pages: [
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/iWIZfMxloIBrrptz.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/kswXDyVXiKCjgTQO.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/nMDABQAFzeJyzMEN.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/OIysHHTrhlQKYTYg.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/bItiSKbvIWZpfHPR.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/bACGIWvJkbyToNcg.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/PpQfXjSibpNdAxUp.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/KQRcHAUXXtvdjAcX.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/xlOyvTobPBeCUHiw.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/rknCqqrtpLPPQiHv.png"
+          "images/salesbook-text-2wd/01.png",
+          "images/salesbook-text-2wd/02.png",
+          "images/salesbook-text-2wd/03.png",
+          "images/salesbook-text-2wd/04.png",
+          "images/salesbook-text-2wd/05.png",
+          "images/salesbook-text-2wd/06.png",
+          "images/salesbook-text-2wd/07.png",
+          "images/salesbook-text-2wd/08.png",
+          "images/salesbook-text-2wd/09.png",
+          "images/salesbook-text-2wd/10.png"
         ]
       },
       "salesbook-text-4wd": {
         title: "セールスブック文言【4WD】",
         pages: [
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/DjAVuYbeUAhAArwN.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/qAqHSNRvXhWAQMNM.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/nCGZWTjbQmOiYsRo.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/lcnofRhsgvVsGEqR.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/BWcXRuSukGnEfdPJ.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/KrMBkRCptLHcJkYJ.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/UclusMxzlTCsmGjq.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/FjvUyThTyDEYouLv.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/PMURtuqcwsvEbpxo.png",
-          "https://files.manuscdn.com/user_upload_by_module/session_file/310519663039109477/JAgwRaZcIJqIsCmr.png"
+          "images/salesbook-text-4wd/01.png",
+          "images/salesbook-text-4wd/02.png",
+          "images/salesbook-text-4wd/03.png",
+          "images/salesbook-text-4wd/04.png",
+          "images/salesbook-text-4wd/05.png",
+          "images/salesbook-text-4wd/06.png",
+          "images/salesbook-text-4wd/07.png",
+          "images/salesbook-text-4wd/08.png",
+          "images/salesbook-text-4wd/09.png",
+          "images/salesbook-text-4wd/10.png"
         ]
       }
     };
