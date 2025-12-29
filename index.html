@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#E60012">
+  <title>ロートピア サービスアプリ</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    
+    :root {
+      --lotopia-orange: #F58220;
+      --lotopia-green: #8DC21F;
+      --lotopia-red: #E60012;
+      --lotopia-yellow: #FFD700;
+      --background: #F2F2F7;
+      --surface: #FFFFFF;
+      --foreground: #1C1C1E;
+      --muted: #8E8E93;
+      --border: rgba(60, 60, 67, 0.12);
+    }
+    
+    html, body {
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      background: var(--background);
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    .app {
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      background: var(--background);
+      position: relative;
+    }
+    
+    /* ステータスバー */
+    .status-bar {
+      height: 44px;
+      padding: 0 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding-top: env(safe-area-inset-top, 0);
+    }
+    
+    .status-bar.light { color: white; }
+    .status-bar.light .signal-bar { background: white; }
+    .status-bar.light .wifi-arc { border-color: white; }
+    .status-bar.light .wifi-dot { background: white; }
+    .status-bar.light .battery-body { border-color: white; }
+    .status-bar.light .battery-level { background: white; }
+    .status-bar.light .battery-cap { background: white; }
+    
+    .status-time { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+    
+    .status-icons { display: flex; align-items: center; gap: 5px; }
+    
+    .signal-icon { display: flex; align-items: flex-end; gap: 1.5px; height: 12px; }
+    .signal-bar { width: 3px; background: var(--foreground); border-radius: 1px; }
+    .signal-bar:nth-child(1) { height: 4px; }
+    .signal-bar:nth-child(2) { height: 6px; }
+    .signal-bar:nth-child(3) { height: 8px; }
+    .signal-bar:nth-child(4) { height: 11px; }
+    
+    .wifi-icon { width: 16px; height: 12px; position: relative; }
+    .wifi-arc { position: absolute; border: 1.5px solid var(--foreground); border-bottom: none; border-radius: 50% 50% 0 0; }
+    .wifi-arc:nth-child(1) { width: 16px; height: 8px; bottom: 4px; left: 0; }
+    .wifi-arc:nth-child(2) { width: 10px; height: 5px; bottom: 4px; left: 3px; }
+    .wifi-arc:nth-child(3) { width: 5px; height: 3px; bottom: 4px; left: 5.5px; }
+    .wifi-dot { position: absolute; width: 3px; height: 3px; background: var(--foreground); border-radius: 50%; bottom: 0; left: 50%; transform: translateX(-50%); }
+    
+    .battery-icon { display: flex; align-items: center; gap: 1px; }
+    .battery-percent { font-size: 12px; font-weight: 500; margin-right: 3px; }
+    .battery-body { width: 22px; height: 11px; border: 1.5px solid var(--foreground); border-radius: 3px; display: flex; align-items: center; padding: 1.5px; }
+    .battery-level { height: 100%; width: 80%; background: var(--lotopia-green); border-radius: 1px; }
+    .battery-cap { width: 2px; height: 5px; background: var(--foreground); border-radius: 0 1px 1px 0; }
+    
+    /* メインコンテンツ */
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: calc(70px + env(safe-area-inset-bottom, 20px));
+    }
+    
+    /* ページ */
+    .page { display: none; flex-direction: column; min-height: 100%; }
+    .page.active { display: flex; animation: fadeIn 0.25s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    
+    /* ヘッダー */
+    .header-hero {
+      background: var(--lotopia-red);
+      padding: calc(44px + env(safe-area-inset-top, 0)) 24px 24px;
+      position: relative;
+    }
+    
+    .logo-container { display: flex; justify-content: center; margin-bottom: 8px; }
+    .logo-box {
+      background: white;
+      border-radius: 12px;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--lotopia-red), #FF4444);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .logo-text {
+      color: var(--lotopia-red);
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+    
+    .header-subtitle {
+      text-align: center;
+      color: rgba(255,255,255,0.9);
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+    
+    .header-banner {
+      background: var(--lotopia-yellow);
+      border-radius: 12px;
+      padding: 12px 16px;
+      text-align: center;
+    }
+    .header-banner-title { color: #333; font-size: 16px; font-weight: 700; }
+    .header-banner-sub { color: #666; font-size: 12px; margin-top: 4px; }
+    
+    /* セクション */
+    .section { padding: 20px 16px 0; }
+    .section-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .section-icon { font-size: 18px; }
+    .section-title { font-size: 16px; font-weight: 700; color: var(--foreground); }
+    
+    /* クイックアクセス */
+    .quick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .quick-card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 16px 8px;
+      text-align: center;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    .quick-card:active { transform: scale(0.96); }
+    .quick-card-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 8px;
+      font-size: 28px;
+    }
+    .quick-card-title { font-size: 13px; font-weight: 600; color: var(--foreground); }
+    .quick-card-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    
+    /* 接客サポート */
+    .support-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .support-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .support-card:active { background: rgba(0,0,0,0.02); }
+    .support-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .support-info { flex: 1; min-width: 0; }
+    .support-title { font-size: 14px; font-weight: 600; color: var(--foreground); }
+    .support-sub { font-size: 11px; color: var(--muted); }
+    .support-arrow { color: var(--muted); font-size: 12px; }
+    
+    /* お知らせ */
+    .news-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .news-more { font-size: 13px; color: var(--lotopia-orange); font-weight: 500; cursor: pointer; }
+    
+    .news-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      margin-bottom: 10px;
+    }
+    .news-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+    .news-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .news-badge.campaign { background: rgba(245, 130, 32, 0.15); color: var(--lotopia-orange); }
+    .news-badge.info { background: rgba(141, 194, 31, 0.15); color: var(--lotopia-green); }
+    .news-badge.new { background: var(--lotopia-red); color: white; }
+    .news-date { font-size: 11px; color: var(--muted); margin-left: auto; }
+    .news-title { font-size: 14px; font-weight: 600; color: var(--foreground); margin-bottom: 4px; }
+    .news-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    
+    /* おすすめカード */
+    .promo-card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      margin-top: 16px;
+    }
+    .promo-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .promo-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+    .promo-title { font-size: 15px; font-weight: 700; color: var(--foreground); }
+    .promo-subtitle { font-size: 12px; color: var(--muted); }
+    .promo-desc { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 14px; }
+    .promo-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .promo-btn:active { opacity: 0.8; }
+    
+    /* 会社情報 */
+    .company-card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      margin-top: 16px;
+    }
+    .company-name { font-size: 14px; font-weight: 600; color: var(--foreground); margin-bottom: 8px; }
+    .company-info { font-size: 12px; color: var(--muted); line-height: 1.8; }
+    .company-link {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      color: var(--lotopia-orange);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    
+    /* タブバー */
+    .tab-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: calc(56px + env(safe-area-inset-bottom, 20px));
+      padding-bottom: env(safe-area-inset-bottom, 20px);
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-start;
+      padding-top: 6px;
+      z-index: 1000;
+    }
+    .tab-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      cursor: pointer;
+      padding: 4px 16px;
+    }
+    .tab-item:active { transform: scale(0.92); }
+    .tab-icon { font-size: 24px; opacity: 0.5; }
+    .tab-label { font-size: 10px; color: var(--muted); font-weight: 500; }
+    .tab-item.active .tab-icon { opacity: 1; }
+    .tab-item.active .tab-label { color: var(--lotopia-red); font-weight: 600; }
+    
+    /* サブページヘッダー */
+    .sub-header {
+      background: var(--lotopia-red);
+      padding: calc(44px + env(safe-area-inset-top, 0)) 16px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .back-btn {
+      color: white;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 6px 12px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 8px;
+      border: none;
+    }
+    .back-btn:active { background: rgba(255,255,255,0.25); }
+    .sub-header-title { color: white; font-size: 17px; font-weight: 600; flex: 1; }
+    
+    /* 見積もりページ */
+    .estimate-tabs {
+      display: flex;
+      padding: 16px;
+      gap: 8px;
+    }
+    .estimate-tab {
+      flex: 1;
+      padding: 12px;
+      border-radius: 10px;
+      border: 2px solid var(--border);
+      background: var(--surface);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+    }
+    .estimate-tab.active {
+      border-color: var(--lotopia-green);
+      background: rgba(141, 194, 31, 0.1);
+      color: var(--lotopia-green);
+    }
+    .estimate-tab.rakunori.active {
+      border-color: var(--lotopia-red);
+      background: rgba(230, 0, 18, 0.1);
+      color: var(--lotopia-red);
+    }
+    
+    .estimate-section { padding: 0 16px 16px; }
+    .estimate-label { font-size: 14px; font-weight: 600; color: var(--foreground); margin-bottom: 10px; }
+    .estimate-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+    .estimate-option {
+      padding: 14px;
+      border-radius: 10px;
+      border: 2px solid #E5D9C3;
+      background: #FFF9E6;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .estimate-option.selected {
+      border-color: var(--lotopia-green);
+      background: rgba(141, 194, 31, 0.1);
+    }
+    .estimate-option.selected.rakunori {
+      border-color: var(--lotopia-red);
+      background: rgba(230, 0, 18, 0.1);
+    }
+    .estimate-option-title { font-size: 14px; font-weight: 600; color: var(--foreground); }
+    .estimate-option-desc { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    
+    .estimate-result {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      margin-top: 16px;
+    }
+    .result-title { font-size: 16px; font-weight: 700; color: var(--foreground); margin-bottom: 16px; text-align: center; }
+    .result-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .result-row:last-child { border-bottom: none; }
+    .result-label { font-size: 13px; color: var(--muted); }
+    .result-value { font-size: 14px; font-weight: 600; color: var(--foreground); }
+    .result-price {
+      text-align: center;
+      padding: 16px 0;
+      margin-top: 8px;
+      background: rgba(141, 194, 31, 0.1);
+      border-radius: 12px;
+    }
+    .result-price.rakunori { background: rgba(230, 0, 18, 0.1); }
+    .result-price-label { font-size: 13px; color: var(--muted); }
+    .result-price-value { font-size: 28px; font-weight: 800; color: var(--lotopia-green); margin-top: 4px; }
+    .result-price-value.rakunori { color: var(--lotopia-red); }
+    .result-price-note { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    
+    .share-section { margin-top: 20px; }
+    .share-label { font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 12px; }
+    .share-buttons { display: flex; gap: 8px; }
+    .share-btn {
+      flex: 1;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .share-btn:active { opacity: 0.8; }
+    .share-btn.line { background: #06C755; }
+    .share-btn.mail { background: #007AFF; }
+    .share-btn.other { background: #8E8E93; }
+    
+    /* サービスページ */
+    .service-card {
+      background: var(--surface);
+      border-radius: 14px;
+      margin: 0 16px 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .service-header {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      cursor: pointer;
+    }
+    .service-header:active { background: rgba(0,0,0,0.02); }
+    .service-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-right: 14px;
+    }
+    .service-info { flex: 1; }
+    .service-title { font-size: 15px; font-weight: 600; color: var(--foreground); }
+    .service-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .service-arrow { color: var(--muted); font-size: 12px; transition: transform 0.2s ease; }
+    .service-card.open .service-arrow { transform: rotate(90deg); }
+    .service-content { display: none; padding: 0 16px 16px; border-top: 1px solid var(--border); }
+    .service-card.open .service-content { display: block; }
+    .service-detail { font-size: 14px; color: var(--foreground); line-height: 1.7; padding-top: 14px; }
+    
+    /* 資料ページ */
+    .doc-category { padding: 16px; }
+    .doc-category-title { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--foreground); margin-bottom: 12px; }
+    .doc-card {
+      background: var(--surface);
+      border-radius: 14px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .doc-item { display: flex; align-items: center; padding: 14px 16px; cursor: pointer; }
+    .doc-item:active { background: rgba(0,0,0,0.02); }
+    .doc-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-right: 12px;
+    }
+    .doc-info { flex: 1; }
+    .doc-title { font-size: 14px; font-weight: 600; color: var(--foreground); display: flex; align-items: center; gap: 6px; }
+    .doc-badge { background: var(--lotopia-green); color: white; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+    .doc-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+    .doc-pages { font-size: 11px; color: var(--lotopia-orange); font-weight: 500; }
+    .doc-arrow { color: var(--lotopia-green); font-size: 16px; margin-left: 8px; }
+    
+    /* PDFビューア */
+    .pdf-viewer-page { display: none; flex-direction: column; height: 100%; background: var(--background); }
+    .pdf-viewer-page.active { display: flex; }
+    .pdf-header {
+      background: var(--lotopia-red);
+      padding: calc(44px + env(safe-area-inset-top, 0)) 16px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .pdf-back {
+      color: white;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 8px;
+      border: none;
+    }
+    .pdf-title { color: white; font-size: 15px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pdf-content { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; overflow: hidden; }
+    .pdf-image-container { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; max-height: calc(100% - 80px); }
+    .pdf-image { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+    .pdf-nav { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 16px; flex-shrink: 0; }
+    .pdf-nav-btn { padding: 10px 20px; border-radius: 10px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .pdf-nav-btn:active { transform: scale(0.95); }
+    .pdf-nav-btn.prev { background: var(--lotopia-orange); color: white; }
+    .pdf-nav-btn.next { background: var(--lotopia-green); color: white; }
+    .pdf-nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .pdf-counter { font-size: 15px; font-weight: 600; color: var(--foreground); min-width: 60px; text-align: center; }
+    .pdf-dots { display: flex; justify-content: center; gap: 6px; padding: 8px 16px 16px; flex-wrap: wrap; flex-shrink: 0; }
+    .pdf-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); cursor: pointer; }
+    .pdf-dot.active { background: var(--lotopia-green); transform: scale(1.2); }
+    
+    /* FAQページ */
+    .faq-filter { display: flex; gap: 8px; padding: 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .faq-filter::-webkit-scrollbar { display: none; }
+    .faq-filter-btn {
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .faq-filter-btn.active { background: var(--lotopia-red); color: white; border-color: var(--lotopia-red); }
+    .faq-card {
+      background: var(--surface);
+      border-radius: 14px;
+      margin: 0 16px 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .faq-question { display: flex; align-items: center; padding: 16px; cursor: pointer; }
+    .faq-question:active { background: rgba(0,0,0,0.02); }
+    .faq-q-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: var(--lotopia-red);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+    .faq-q-text { flex: 1; font-size: 14px; font-weight: 600; color: var(--foreground); line-height: 1.5; }
+    .faq-arrow { color: var(--muted); font-size: 12px; margin-left: 8px; transition: transform 0.2s ease; }
+    .faq-card.open .faq-arrow { transform: rotate(90deg); }
+    .faq-answer { display: none; padding: 0 16px 16px; border-top: 1px solid var(--border); }
+    .faq-card.open .faq-answer { display: block; }
+    .faq-a-content { display: flex; padding-top: 14px; }
+    .faq-a-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: var(--lotopia-green);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+    .faq-a-text { font-size: 14px; color: var(--foreground); line-height: 1.7; }
+    
+    /* ホームインジケーター */
+    .home-indicator {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 134px;
+      height: 5px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 3px;
+      z-index: 1001;
+    }
+    
+    /* スペーサー */
+    .spacer { height: 24px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- ステータスバー -->
+    <div class="status-bar light" id="status-bar">
+      <div class="status-time" id="status-time">12:00</div>
+      <div class="status-icons">
+        <div class="signal-icon">
+          <div class="signal-bar"></div>
+          <div class="signal-bar"></div>
+          <div class="signal-bar"></div>
+          <div class="signal-bar"></div>
+        </div>
+        <div class="wifi-icon">
+          <div class="wifi-arc"></div>
+          <div class="wifi-arc"></div>
+          <div class="wifi-arc"></div>
+          <div class="wifi-dot"></div>
+        </div>
+        <div class="battery-icon">
+          <span class="battery-percent">80%</span>
+          <div class="battery-body">
+            <div class="battery-level"></div>
+          </div>
+          <div class="battery-cap"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- メインコンテンツ -->
+    <div class="main-content">
+      <!-- ホームページ -->
+      <div class="page active" id="page-home">
+        <div class="header-hero">
+          <div class="logo-container">
+            <div class="logo-box">
+              <div class="logo-icon">▲</div>
+              <div class="logo-text">LOTOPIA</div>
+            </div>
+          </div>
+          <div class="header-subtitle">社員向けサポートアプリ</div>
+          <div class="header-banner">
+            <div class="header-banner-title">LET'S ENJOY CAR LIFE!</div>
+            <div class="header-banner-sub">皆様のカーライフをご支援します</div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <div class="section-header">
+            <span class="section-icon">✅</span>
+            <span class="section-title">クイックアクセス</span>
+          </div>
+          <div class="quick-grid">
+            <div class="quick-card" onclick="showEstimate('shinsya')">
+              <div class="quick-card-icon" style="background:rgba(141,194,31,0.15)">📋</div>
+              <div class="quick-card-title">新☆車生活</div>
+              <div class="quick-card-sub">見積もり</div>
+            </div>
+            <div class="quick-card" onclick="showEstimate('rakunori')">
+              <div class="quick-card-icon" style="background:rgba(230,0,18,0.15)">🚗</div>
+              <div class="quick-card-title">楽ノリ</div>
+              <div class="quick-card-sub">レンタカー</div>
+            </div>
+            <div class="quick-card" onclick="showPage('page-documents')">
+              <div class="quick-card-icon" style="background:rgba(245,130,32,0.15)">📁</div>
+              <div class="quick-card-title">資料</div>
+              <div class="quick-card-sub">データベース</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <div class="section-header">
+            <span class="section-icon">ℹ️</span>
+            <span class="section-title">接客サポート</span>
+          </div>
+          <div class="support-grid">
+            <div class="support-card" onclick="showPage('page-services')">
+              <div class="support-icon" style="background:rgba(141,194,31,0.15)">ℹ️</div>
+              <div class="support-info">
+                <div class="support-title">サービス説明</div>
+                <div class="support-sub">全サービスの詳細</div>
+              </div>
+              <div class="support-arrow">›</div>
+            </div>
+            <div class="support-card" onclick="showPage('page-faq')">
+              <div class="support-icon" style="background:rgba(245,130,32,0.15)">❓</div>
+              <div class="support-info">
+                <div class="support-title">よくある質問</div>
+                <div class="support-sub">FAQ・回答集</div>
+              </div>
+              <div class="support-arrow">›</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <div class="news-header">
+            <div class="section-header" style="margin-bottom:0">
+              <span class="section-icon">📢</span>
+              <span class="section-title">お知らせ</span>
+            </div>
+            <div class="news-more">すべて見る</div>
+          </div>
+          
+          <div class="news-card">
+            <div class="news-meta">
+              <span class="news-badge campaign">キャンペーン</span>
+              <span class="news-badge new">NEW</span>
+              <span class="news-date">2024/12/28</span>
+            </div>
+            <div class="news-title">年末年始キャンペーン実施中！</div>
+            <div class="news-desc">新☆車生活 新規ご契約で最大3万円キャッシュバック</div>
+          </div>
+          
+          <div class="news-card">
+            <div class="news-meta">
+              <span class="news-badge info">お知らせ</span>
+              <span class="news-badge new">NEW</span>
+              <span class="news-date">2024/12/20</span>
+            </div>
+            <div class="news-title">楽ノリレンタカー 冬季料金のお知らせ</div>
+            <div class="news-desc">12/20〜1/10は繁忙期料金となります</div>
+          </div>
+          
+          <div class="news-card">
+            <div class="news-meta">
+              <span class="news-badge info">お知らせ</span>
+              <span class="news-date">2024/12/15</span>
+            </div>
+            <div class="news-title">年末年始の営業時間について</div>
+            <div class="news-desc">12/29〜1/3は休業となります</div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <div class="promo-card">
+            <div class="promo-header">
+              <div class="promo-icon" style="background:rgba(141,194,31,0.15)">✅</div>
+              <div>
+                <div class="promo-title">新☆車生活</div>
+                <div class="promo-subtitle">月々11,000円から新車に乗れる</div>
+              </div>
+            </div>
+            <div class="promo-desc">7年間、月々定額で新車に乗れるマイカーリース。車検・税金・メンテナンスもコミコミで安心のカーライフを。</div>
+            <button class="promo-btn" style="background:var(--lotopia-green)" onclick="showEstimate('shinsya')">
+              📋 見積もりを始める
+            </button>
+          </div>
+          
+          <div class="company-card">
+            <div class="company-name">株式会社ロートピア</div>
+            <div class="company-info">
+              〒105-0014<br>
+              東京都港区芝2-3-3<br>
+              JRE芝二丁目大門ビル 5F<br>
+              TEL：03-3452-2463
+            </div>
+            <div class="company-link" onclick="window.open('https://lotopia.net/', '_blank')">
+              🔗 公式サイトを見る
+            </div>
+          </div>
+        </div>
+        
+        <div class="spacer"></div>
+      </div>
+      
+      <!-- 見積もりページ -->
+      <div class="page" id="page-estimate">
+        <div class="sub-header">
+          <button class="back-btn" onclick="showPage('page-home')">‹ 戻る</button>
+          <div class="sub-header-title">見積もり</div>
+        </div>
+        
+        <div class="estimate-tabs">
+          <div class="estimate-tab active" id="tab-shinsya" onclick="switchEstimateTab('shinsya')">新☆車生活</div>
+          <div class="estimate-tab" id="tab-rakunori" onclick="switchEstimateTab('rakunori')">楽ノリレンタカー</div>
+        </div>
+        
+        <!-- 新☆車生活 -->
+        <div id="estimate-shinsya">
+          <div class="estimate-section">
+            <div class="estimate-label">① プランを選択</div>
+            <div class="estimate-options" id="plan-options"></div>
+            
+            <div class="estimate-label">② メーカーを選択</div>
+            <div class="estimate-options" id="maker-options"></div>
+            
+            <div class="estimate-label" id="car-label" style="display:none">③ 車種を選択</div>
+            <div class="estimate-options" id="car-options"></div>
+            
+            <div class="estimate-label" id="maintenance-label" style="display:none">④ メンテナンスプランを選択</div>
+            <div class="estimate-options" id="maintenance-options"></div>
+          </div>
+          
+          <div id="shinsya-result" style="display:none;padding:0 16px 16px">
+            <div class="estimate-result">
+              <div class="result-title">📋 見積もり結果</div>
+              <div class="result-row">
+                <span class="result-label">車種</span>
+                <span class="result-value" id="result-car"></span>
+              </div>
+              <div class="result-row">
+                <span class="result-label">プラン</span>
+                <span class="result-value" id="result-plan"></span>
+              </div>
+              <div class="result-row">
+                <span class="result-label">メンテナンス</span>
+                <span class="result-value" id="result-maintenance"></span>
+              </div>
+              <div class="result-price">
+                <div class="result-price-label">月々のお支払い</div>
+                <div class="result-price-value" id="result-monthly"></div>
+                <div class="result-price-note">ボーナス時加算：<span id="result-bonus"></span></div>
+              </div>
+              
+              <div class="share-section">
+                <div class="share-label">見積もり結果を共有</div>
+                <div class="share-buttons">
+                  <button class="share-btn line" onclick="shareShinsya('line')">LINE</button>
+                  <button class="share-btn mail" onclick="shareShinsya('mail')">メール</button>
+                  <button class="share-btn other" onclick="shareShinsya('other')">その他</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 楽ノリレンタカー -->
+        <div id="estimate-rakunori" style="display:none">
+          <div class="estimate-section">
+            <div class="estimate-label">① 車両クラスを選択</div>
+            <div class="estimate-options" id="class-options"></div>
+            
+            <div class="estimate-label">② 利用時間を選択</div>
+            <div class="estimate-options" id="duration-options"></div>
+          </div>
+          
+          <div id="rakunori-result" style="display:none;padding:0 16px 16px">
+            <div class="estimate-result">
+              <div class="result-title">🚗 見積もり結果</div>
+              <div class="result-row">
+                <span class="result-label">車両クラス</span>
+                <span class="result-value" id="result-class"></span>
+              </div>
+              <div class="result-row">
+                <span class="result-label">利用時間</span>
+                <span class="result-value" id="result-duration"></span>
+              </div>
+              <div class="result-price rakunori">
+                <div class="result-price-label">料金（税込）</div>
+                <div class="result-price-value rakunori" id="result-rental-price"></div>
+              </div>
+              
+              <div class="share-section">
+                <div class="share-label">見積もり結果を共有</div>
+                <div class="share-buttons">
+                  <button class="share-btn line" onclick="shareRakunori('line')">LINE</button>
+                  <button class="share-btn mail" onclick="shareRakunori('mail')">メール</button>
+                  <button class="share-btn other" onclick="shareRakunori('other')">その他</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- サービスページ -->
+      <div class="page" id="page-services">
+        <div class="sub-header">
+          <button class="back-btn" onclick="showPage('page-home')">‹ 戻る</button>
+          <div class="sub-header-title">サービス</div>
+        </div>
+        
+        <div style="padding-top:16px">
+          <div class="service-card" onclick="toggleService(this)">
+            <div class="service-header">
+              <div class="service-icon" style="background:#FFEBEE">🚗</div>
+              <div class="service-info">
+                <div class="service-title">新☆車生活</div>
+                <div class="service-sub">マイカーリースサービス</div>
+              </div>
+              <div class="service-arrow">›</div>
+            </div>
+            <div class="service-content">
+              <div class="service-detail">
+                月々定額で新車に乗れるマイカーリースサービスです。車両代、税金、保険、メンテナンス費用がすべてコミコミの安心プラン。頭金0円、ボーナス払いなしで、家計の管理も簡単です。<br><br>
+                <strong>特徴：</strong><br>
+                ・月々11,000円から<br>
+                ・車検・税金・メンテナンスコミコミ<br>
+                ・7年間の安心サポート<br>
+                ・契約満了後は車がもらえる
+              </div>
+            </div>
+          </div>
+          
+          <div class="service-card" onclick="toggleService(this)">
+            <div class="service-header">
+              <div class="service-icon" style="background:#FFF3E0">🚙</div>
+              <div class="service-info">
+                <div class="service-title">楽ノリ レンタカー</div>
+                <div class="service-sub">格安レンタカーサービス</div>
+              </div>
+              <div class="service-arrow">›</div>
+            </div>
+            <div class="service-content">
+              <div class="service-detail">
+                地域最安値クラスのレンタカーサービス。軽自動車からワゴン車まで豊富なラインナップ。24時間営業で、急なご利用にも対応いたします。<br><br>
+                <strong>料金例：</strong><br>
+                ・Sクラス（軽自動車）：1時間1,000円〜<br>
+                ・Mクラス（コンパクト）：1時間1,320円〜<br>
+                ・Lクラス（セダン・ミニバン）：1時間1,650円〜
+              </div>
+            </div>
+          </div>
+          
+          <div class="service-card" onclick="toggleService(this)">
+            <div class="service-header">
+              <div class="service-icon" style="background:#E8F5E9">🔧</div>
+              <div class="service-info">
+                <div class="service-title">車検・整備</div>
+                <div class="service-sub">安心の整備サービス</div>
+              </div>
+              <div class="service-arrow">›</div>
+            </div>
+            <div class="service-content">
+              <div class="service-detail">
+                国家資格を持つ整備士が、お客様の大切なお車を丁寧に整備いたします。車検、定期点検、オイル交換など、お気軽にご相談ください。<br><br>
+                <strong>サービス内容：</strong><br>
+                ・車検（軽自動車・普通車）<br>
+                ・法定12ヶ月点検<br>
+                ・オイル交換・エレメント交換<br>
+                ・タイヤ交換・バッテリー交換
+              </div>
+            </div>
+          </div>
+          
+          <div class="service-card" onclick="toggleService(this)">
+            <div class="service-header">
+              <div class="service-icon" style="background:#E3F2FD">🛡️</div>
+              <div class="service-info">
+                <div class="service-title">自動車保険</div>
+                <div class="service-sub">最適なプランをご提案</div>
+              </div>
+              <div class="service-arrow">›</div>
+            </div>
+            <div class="service-content">
+              <div class="service-detail">
+                複数の保険会社から、お客様に最適な自動車保険をご提案いたします。事故対応も24時間サポートで安心です。<br><br>
+                <strong>取扱保険会社：</strong><br>
+                ・東京海上日動<br>
+                ・損保ジャパン<br>
+                ・三井住友海上<br>
+                ・あいおいニッセイ同和
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 資料ページ -->
+      <div class="page" id="page-documents">
+        <div class="sub-header">
+          <button class="back-btn" onclick="showPage('page-home')">‹ 戻る</button>
+          <div class="sub-header-title">資料</div>
+        </div>
+        
+        <div class="doc-category">
+          <div class="doc-category-title">
+            <span>🚗</span>
+            <span>新☆車生活</span>
+          </div>
+          
+          <div class="doc-card">
+            <div class="doc-item" onclick="openPdf('salesbook-2wd')">
+              <div class="doc-icon" style="background:#FFEBEE">📕</div>
+              <div class="doc-info">
+                <div class="doc-title">
+                  セールスブック均等払い【2WD】
+                  <span class="doc-badge">NEW</span>
+                </div>
+                <div class="doc-sub">新☆車生活 2WD版のセールスブック</div>
+                <div class="doc-pages">19ページ</div>
+              </div>
+              <div class="doc-arrow">›</div>
+            </div>
+          </div>
+          
+          <div class="doc-card">
+            <div class="doc-item" onclick="openPdf('salesbook-4wd')">
+              <div class="doc-icon" style="background:#E8F5E9">📗</div>
+              <div class="doc-info">
+                <div class="doc-title">
+                  セールスブック均等払い【4WD】
+                  <span class="doc-badge">NEW</span>
+                </div>
+                <div class="doc-sub">新☆車生活 4WD版のセールスブック</div>
+                <div class="doc-pages">19ページ</div>
+              </div>
+              <div class="doc-arrow">›</div>
+            </div>
+          </div>
+          
+          <div class="doc-card">
+            <div class="doc-item" onclick="openPdf('salesbook-text-2wd')">
+              <div class="doc-icon" style="background:#E3F2FD">📘</div>
+              <div class="doc-info">
+                <div class="doc-title">セールスブック文言【2WD】</div>
+                <div class="doc-sub">2WD版のセールストーク・説明文言集</div>
+                <div class="doc-pages">10ページ</div>
+              </div>
+              <div class="doc-arrow">›</div>
+            </div>
+          </div>
+          
+          <div class="doc-card">
+            <div class="doc-item" onclick="openPdf('salesbook-text-4wd')">
+              <div class="doc-icon" style="background:#FFF3E0">📙</div>
+              <div class="doc-info">
+                <div class="doc-title">セールスブック文言【4WD】</div>
+                <div class="doc-sub">4WD版のセールストーク・説明文言集</div>
+                <div class="doc-pages">10ページ</div>
+              </div>
+              <div class="doc-arrow">›</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- FAQページ -->
+      <div class="page" id="page-faq">
+        <div class="sub-header">
+          <button class="back-btn" onclick="showPage('page-home')">‹ 戻る</button>
+          <div class="sub-header-title">よくある質問</div>
+        </div>
+        
+        <div class="faq-filter">
+          <button class="faq-filter-btn active" onclick="filterFaq('all', this)">すべて</button>
+          <button class="faq-filter-btn" onclick="filterFaq('lease', this)">リース</button>
+          <button class="faq-filter-btn" onclick="filterFaq('rental', this)">レンタカー</button>
+          <button class="faq-filter-btn" onclick="filterFaq('other', this)">その他</button>
+        </div>
+        
+        <div id="faq-list">
+          <div class="faq-card" data-category="lease" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <div class="faq-q-icon">Q</div>
+              <div class="faq-q-text">リース契約の期間はどのくらいですか？</div>
+              <div class="faq-arrow">›</div>
+            </div>
+            <div class="faq-answer">
+              <div class="faq-a-content">
+                <div class="faq-a-icon">A</div>
+                <div class="faq-a-text">新☆車生活のリース契約期間は7年間です。契約満了後は、そのままお車をもらえます。</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="faq-card" data-category="lease" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <div class="faq-q-icon">Q</div>
+              <div class="faq-q-text">月々の支払いに含まれるものは？</div>
+              <div class="faq-arrow">›</div>
+            </div>
+            <div class="faq-answer">
+              <div class="faq-a-content">
+                <div class="faq-a-icon">A</div>
+                <div class="faq-a-text">車両代、自動車税、重量税、自賠責保険、車検費用、メンテナンス費用がすべて含まれています。追加費用の心配なく、安心してカーライフをお楽しみいただけます。</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="faq-card" data-category="lease" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <div class="faq-q-icon">Q</div>
+              <div class="faq-q-text">頭金は必要ですか？</div>
+              <div class="faq-arrow">›</div>
+            </div>
+            <div class="faq-answer">
+              <div class="faq-a-content">
+                <div class="faq-a-icon">A</div>
+                <div class="faq-a-text">頭金は不要です。月々の定額料金のみでご利用いただけます。</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="faq-card" data-category="rental" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <div class="faq-q-icon">Q</div>
+              <div class="faq-q-text">レンタカーの予約方法は？</div>
+              <div class="faq-arrow">›</div>
+            </div>
+            <div class="faq-answer">
+              <div class="faq-a-content">
+                <div class="faq-a-icon">A</div>
+                <div class="faq-a-text">お電話またはWebサイトからご予約いただけます。当日のご利用も空き状況により可能ですので、お気軽にお問い合わせください。</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="faq-card" data-category="rental" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <div class="faq-q-icon">Q</div>
+              <div class="faq-q-text">免責補償は必要ですか？</div>
+              <div class="faq-arrow">›</div>
+            </div>
+            <div class="faq-answer">
+              <div class="faq-a-content">
+                <div class="faq-a-icon">A</div>
+                <div class="faq-a-text">任意ですが、万が一の事故に備えて加入をおすすめしています。1日1,100円でご加入いただけます。</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="faq-card" data-category="other" onclick="toggleFaq(this)">
+            <div class="faq-question">
+              <div class="faq-q-icon">Q</div>
+              <div class="faq-q-text">営業時間を教えてください</div>
+              <div class="faq-arrow">›</div>
+            </div>
+            <div class="faq-answer">
+              <div class="faq-a-content">
+                <div class="faq-a-icon">A</div>
+                <div class="faq-a-text">営業時間は9:00〜19:00です。定休日は毎週水曜日となっております。祝日は営業しておりますので、お気軽にご来店ください。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- PDFビューア -->
+      <div class="pdf-viewer-page" id="page-pdf-viewer">
+        <div class="pdf-header">
+          <button class="pdf-back" onclick="closePdf()">‹ 戻る</button>
+          <div class="pdf-title" id="pdf-title">セールスブック</div>
+        </div>
+        
+        <div class="pdf-content">
+          <div class="pdf-image-container">
+            <img class="pdf-image" id="pdf-image" src="" alt="PDF Page">
+          </div>
+        </div>
+        
+        <div class="pdf-nav">
+          <button class="pdf-nav-btn prev" id="pdf-prev" onclick="pdfPrev()">‹ 前へ</button>
+          <div class="pdf-counter">
+            <span id="pdf-current">1</span> / <span id="pdf-total">19</span>
+          </div>
+          <button class="pdf-nav-btn next" id="pdf-next" onclick="pdfNext()">次へ ›</button>
+        </div>
+        
+        <div class="pdf-dots" id="pdf-dots"></div>
+      </div>
+    </div>
+    
+    <!-- タブバー -->
+    <div class="tab-bar" id="tab-bar">
+      <div class="tab-item active" onclick="switchTab('home', this)">
+        <div class="tab-icon">🏠</div>
+        <div class="tab-label">ホーム</div>
+      </div>
+      <div class="tab-item" onclick="switchTab('estimate', this)">
+        <div class="tab-icon">📋</div>
+        <div class="tab-label">見積もり</div>
+      </div>
+      <div class="tab-item" onclick="switchTab('services', this)">
+        <div class="tab-icon">🚗</div>
+        <div class="tab-label">サービス</div>
+      </div>
+      <div class="tab-item" onclick="switchTab('documents', this)">
+        <div class="tab-icon">📁</div>
+        <div class="tab-label">資料</div>
+      </div>
+    </div>
+    
+    <div class="home-indicator"></div>
+  </div>
+  
+  <script>
+    // データ
+    const SHINSYA_PLANS = [
+      { id: "11000", name: "11,000円プラン", monthlyBase: 11000, bonus: 39600 },
+      { id: "13200", name: "13,200円プラン", monthlyBase: 13200, bonus: 33000 },
+    ];
+    
+    const MAKERS = [
+      { id: "daihatsu_honda", name: "ダイハツ/ホンダ" },
+      { id: "suzuki", name: "スズキ" },
+      { id: "mitsubishi_nissan", name: "三菱/ニッサン" },
+    ];
+    
+    const CAR_MODELS = {
+      daihatsu_honda: [
+        { id: "mira_e_s", name: "ミライース L", adjustment: 0 },
+        { id: "taft", name: "タフト X", adjustment: 2200 },
+        { id: "tanto", name: "タント L", adjustment: 3300 },
+        { id: "move_canbus", name: "ムーヴキャンバス ストライプスX", adjustment: 4400 },
+        { id: "tanto_custom", name: "タントカスタム X", adjustment: 5500 },
+        { id: "nbox_custom", name: "N-BOXカスタム L", adjustment: 6600 },
+      ],
+      suzuki: [
+        { id: "alto", name: "アルト L", adjustment: 0 },
+        { id: "wagon_r", name: "ワゴンR FX", adjustment: 1100 },
+        { id: "hustler", name: "ハスラー HYBRID G", adjustment: 3300 },
+        { id: "spacia", name: "スペーシア HYBRID G", adjustment: 4400 },
+        { id: "jimny", name: "ジムニー XG", adjustment: 5500 },
+      ],
+      mitsubishi_nissan: [
+        { id: "ek_wagon", name: "eKワゴン M", adjustment: 1100 },
+        { id: "ek_x", name: "eKクロス M", adjustment: 3300 },
+        { id: "dayz", name: "デイズ S", adjustment: 1100 },
+        { id: "roox", name: "ルークス S", adjustment: 4400 },
+      ],
+    };
+    
+    const MAINTENANCE_PLANS = [
+      { id: "basic", name: "基本プラン", price: 0, description: "車検2回・オイル交換14回" },
+      { id: "anshin", name: "安心プラン", price: 1800, description: "基本+法定点検・安全点検" },
+      { id: "jujitsu", name: "充実プラン", price: 3600, description: "安心+タイヤ・バッテリー交換" },
+    ];
+    
+    const CAR_CLASSES = [
+      { id: "S", name: "Sクラス", description: "軽自動車" },
+      { id: "M", name: "Mクラス", description: "コンパクトカー" },
+      { id: "L", name: "Lクラス", description: "セダン・ミニバン" },
+    ];
+    
+    const DURATIONS = [
+      { id: "1hour", name: "1時間", hours: 1 },
+      { id: "6hours", name: "6時間", hours: 6 },
+      { id: "day", name: "当日（日帰り）", hours: 12 },
+      { id: "overnight", name: "1泊（24時間以内）", hours: 24 },
+      { id: "extended", name: "以降24時間ずつ", hours: 48 },
+    ];
+    
+    const RAKUNORI_PRICES = {
+      S: { "1hour": 1000, "6hours": 2640, "day": 3300, "overnight": 3300, "extended": 6600 },
+      M: { "1hour": 1320, "6hours": 4400, "day": 5500, "overnight": 5500, "extended": 11000 },
+      L: { "1hour": 1650, "6hours": 6600, "day": 7700, "overnight": 8800, "extended": 17600 },
+    };
+    
+    const PDF_DATA = {
+      "salesbook-2wd": {
+        title: "セールスブック均等払い【2WD】",
+        pages: Array.from({length: 19}, (_, i) => `images/salesbook-2wd/${String(i+1).padStart(2,'0')}.png`)
+      },
+      "salesbook-4wd": {
+        title: "セールスブック均等払い【4WD】",
+        pages: Array.from({length: 19}, (_, i) => `images/salesbook-4wd/${String(i+1).padStart(2,'0')}.png`)
+      },
+      "salesbook-text-2wd": {
+        title: "セールスブック文言【2WD】",
+        pages: Array.from({length: 10}, (_, i) => `images/salesbook-text-2wd/${String(i+1).padStart(2,'0')}.png`)
+      },
+      "salesbook-text-4wd": {
+        title: "セールスブック文言【4WD】",
+        pages: Array.from({length: 10}, (_, i) => `images/salesbook-text-4wd/${String(i+1).padStart(2,'0')}.png`)
+      }
+    };
+    
+    // 状態
+    let selectedPlan = "";
+    let selectedMaker = "";
+    let selectedCar = "";
+    let selectedMaintenance = "basic";
+    let selectedClass = "";
+    let selectedDuration = "";
+    let currentPdfId = null;
+    let currentPdfPage = 0;
+    
+    // 時刻更新
+    function updateTime() {
+      const now = new Date();
+      document.getElementById('status-time').textContent = 
+        `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+    }
+    updateTime();
+    setInterval(updateTime, 1000);
+    
+    // ページ切り替え
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.pdf-viewer-page').forEach(p => p.classList.remove('active'));
+      document.getElementById(pageId).classList.add('active');
+      
+      const tabBar = document.getElementById('tab-bar');
+      tabBar.style.display = pageId === 'page-pdf-viewer' ? 'none' : 'flex';
+    }
+    
+    function switchTab(tab, element) {
+      document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+      element.classList.add('active');
+      showPage('page-' + (tab === 'estimate' ? 'estimate' : tab));
+    }
+    
+    function showEstimate(type) {
+      showPage('page-estimate');
+      switchEstimateTab(type);
+      document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-item')[1].classList.add('active');
+    }
+    
+    // 見積もりタブ切り替え
+    function switchEstimateTab(tab) {
+      document.getElementById('tab-shinsya').classList.toggle('active', tab === 'shinsya');
+      document.getElementById('tab-rakunori').classList.toggle('active', tab === 'rakunori');
+      document.getElementById('tab-rakunori').classList.toggle('rakunori', tab === 'rakunori');
+      document.getElementById('estimate-shinsya').style.display = tab === 'shinsya' ? 'block' : 'none';
+      document.getElementById('estimate-rakunori').style.display = tab === 'rakunori' ? 'block' : 'none';
+    }
+    
+    // 新☆車生活の選択肢を初期化
+    function initShinsyaOptions() {
+      const planOptions = document.getElementById('plan-options');
+      planOptions.innerHTML = SHINSYA_PLANS.map(p => `
+        <div class="estimate-option" onclick="selectPlan('${p.id}')">
+          <div class="estimate-option-title">${p.name}</div>
+          <div class="estimate-option-desc">ボーナス時加算：¥${p.bonus.toLocaleString()}</div>
+        </div>
+      `).join('');
+      
+      const makerOptions = document.getElementById('maker-options');
+      makerOptions.innerHTML = MAKERS.map(m => `
+        <div class="estimate-option" onclick="selectMaker('${m.id}')">
+          <div class="estimate-option-title">${m.name}</div>
+        </div>
+      `).join('');
+    }
+    
+    function selectPlan(id) {
+      selectedPlan = id;
+      updateOptionSelection('plan-options', id);
+      calculateShinsya();
+    }
+    
+    function selectMaker(id) {
+      selectedMaker = id;
+      selectedCar = "";
+      updateOptionSelection('maker-options', id);
+      
+      document.getElementById('car-label').style.display = 'block';
+      const carOptions = document.getElementById('car-options');
+      carOptions.innerHTML = CAR_MODELS[id].map(c => `
+        <div class="estimate-option" onclick="selectCar('${c.id}')">
+          <div class="estimate-option-title">${c.name}</div>
+          <div class="estimate-option-desc">調整額：${c.adjustment > 0 ? '+' : ''}¥${c.adjustment.toLocaleString()}</div>
+        </div>
+      `).join('');
+      
+      document.getElementById('maintenance-label').style.display = 'none';
+      document.getElementById('maintenance-options').innerHTML = '';
+      document.getElementById('shinsya-result').style.display = 'none';
+    }
+    
+    function selectCar(id) {
+      selectedCar = id;
+      updateOptionSelection('car-options', id);
+      
+      document.getElementById('maintenance-label').style.display = 'block';
+      const maintenanceOptions = document.getElementById('maintenance-options');
+      maintenanceOptions.innerHTML = MAINTENANCE_PLANS.map(m => `
+        <div class="estimate-option ${m.id === selectedMaintenance ? 'selected' : ''}" onclick="selectMaintenance('${m.id}')">
+          <div class="estimate-option-title">${m.name}${m.price > 0 ? ` (+¥${m.price.toLocaleString()}/月)` : ''}</div>
+          <div class="estimate-option-desc">${m.description}</div>
+        </div>
+      `).join('');
+      
+      calculateShinsya();
+    }
+    
+    function selectMaintenance(id) {
+      selectedMaintenance = id;
+      updateOptionSelection('maintenance-options', id);
+      calculateShinsya();
+    }
+    
+    function updateOptionSelection(containerId, selectedId) {
+      const container = document.getElementById(containerId);
+      container.querySelectorAll('.estimate-option').forEach(opt => {
+        opt.classList.remove('selected');
+      });
+      const options = containerId === 'plan-options' ? SHINSYA_PLANS :
+                      containerId === 'maker-options' ? MAKERS :
+                      containerId === 'car-options' ? CAR_MODELS[selectedMaker] :
+                      MAINTENANCE_PLANS;
+      const index = options.findIndex(o => o.id === selectedId);
+      if (index >= 0) {
+        container.children[index].classList.add('selected');
+      }
+    }
+    
+    function calculateShinsya() {
+      if (!selectedPlan || !selectedCar) {
+        document.getElementById('shinsya-result').style.display = 'none';
+        return;
+      }
+      
+      const plan = SHINSYA_PLANS.find(p => p.id === selectedPlan);
+      const car = Object.values(CAR_MODELS).flat().find(c => c.id === selectedCar);
+      const maintenance = MAINTENANCE_PLANS.find(m => m.id === selectedMaintenance);
+      
+      const monthly = plan.monthlyBase + car.adjustment + maintenance.price;
+      
+      document.getElementById('result-car').textContent = car.name;
+      document.getElementById('result-plan').textContent = plan.name;
+      document.getElementById('result-maintenance').textContent = maintenance.name;
+      document.getElementById('result-monthly').textContent = `¥${monthly.toLocaleString()}`;
+      document.getElementById('result-bonus').textContent = `¥${plan.bonus.toLocaleString()}`;
+      document.getElementById('shinsya-result').style.display = 'block';
+    }
+    
+    // 楽ノリレンタカーの選択肢を初期化
+    function initRakunoriOptions() {
+      const classOptions = document.getElementById('class-options');
+      classOptions.innerHTML = CAR_CLASSES.map(c => `
+        <div class="estimate-option" onclick="selectClass('${c.id}')">
+          <div class="estimate-option-title">${c.name}</div>
+          <div class="estimate-option-desc">${c.description}</div>
+        </div>
+      `).join('');
+      
+      const durationOptions = document.getElementById('duration-options');
+      durationOptions.innerHTML = DURATIONS.map(d => `
+        <div class="estimate-option" onclick="selectDuration('${d.id}')">
+          <div class="estimate-option-title">${d.name}</div>
+        </div>
+      `).join('');
+    }
+    
+    function selectClass(id) {
+      selectedClass = id;
+      document.querySelectorAll('#class-options .estimate-option').forEach((opt, i) => {
+        opt.classList.toggle('selected', CAR_CLASSES[i].id === id);
+        opt.classList.toggle('rakunori', CAR_CLASSES[i].id === id);
+      });
+      calculateRakunori();
+    }
+    
+    function selectDuration(id) {
+      selectedDuration = id;
+      document.querySelectorAll('#duration-options .estimate-option').forEach((opt, i) => {
+        opt.classList.toggle('selected', DURATIONS[i].id === id);
+        opt.classList.toggle('rakunori', DURATIONS[i].id === id);
+      });
+      calculateRakunori();
+    }
+    
+    function calculateRakunori() {
+      if (!selectedClass || !selectedDuration) {
+        document.getElementById('rakunori-result').style.display = 'none';
+        return;
+      }
+      
+      const carClass = CAR_CLASSES.find(c => c.id === selectedClass);
+      const duration = DURATIONS.find(d => d.id === selectedDuration);
+      const price = RAKUNORI_PRICES[selectedClass][selectedDuration];
+      
+      document.getElementById('result-class').textContent = `${carClass.name}（${carClass.description}）`;
+      document.getElementById('result-duration').textContent = duration.name;
+      document.getElementById('result-rental-price').textContent = `¥${price.toLocaleString()}`;
+      document.getElementById('rakunori-result').style.display = 'block';
+    }
+    
+    // シェア機能
+    function generateShinsyaMessage() {
+      const plan = SHINSYA_PLANS.find(p => p.id === selectedPlan);
+      const car = Object.values(CAR_MODELS).flat().find(c => c.id === selectedCar);
+      const maintenance = MAINTENANCE_PLANS.find(m => m.id === selectedMaintenance);
+      const monthly = plan.monthlyBase + car.adjustment + maintenance.price;
+      
+      return `【新☆車生活 見積もり結果】
+
+車種：${car.name}
+プラン：${plan.name}
+メンテナンス：${maintenance.name}
+
+月々のお支払い：¥${monthly.toLocaleString()}
+ボーナス時加算：¥${plan.bonus.toLocaleString()}
+
+※車検・税金・メンテナンスがコミコミ！
+
+詳しくはロートピアへ
+https://lotopia.net/shinsya/`;
+    }
+    
+    function generateRakunoriMessage() {
+      const carClass = CAR_CLASSES.find(c => c.id === selectedClass);
+      const duration = DURATIONS.find(d => d.id === selectedDuration);
+      const price = RAKUNORI_PRICES[selectedClass][selectedDuration];
+      
+      return `【楽ノリレンタカー 見積もり結果】
+
+車両クラス：${carClass.name}（${carClass.description}）
+利用時間：${duration.name}
+
+料金（税込）：¥${price.toLocaleString()}
+
+詳しくはロートピアへ
+https://rakunori.renta-navi.com/`;
+    }
+    
+    function shareShinsya(type) {
+      const message = generateShinsyaMessage();
+      share(type, message, '新☆車生活 見積もり結果');
+    }
+    
+    function shareRakunori(type) {
+      const message = generateRakunoriMessage();
+      share(type, message, '楽ノリレンタカー 見積もり結果');
+    }
+    
+    function share(type, message, title) {
+      const encoded = encodeURIComponent(message);
+      if (type === 'line') {
+        window.open(`https://line.me/R/msg/text/?${encoded}`, '_blank');
+      } else if (type === 'mail') {
+        window.location.href = `mailto:?subject=${encodeURIComponent(title)}&body=${encoded}`;
+      } else {
+        if (navigator.share) {
+          navigator.share({ title, text: message });
+        } else {
+          navigator.clipboard.writeText(message);
+          alert('クリップボードにコピーしました');
+        }
+      }
+    }
+    
+    // サービス展開
+    function toggleService(card) {
+      card.classList.toggle('open');
+    }
+    
+    // FAQ
+    function toggleFaq(card) {
+      card.classList.toggle('open');
+    }
+    
+    function filterFaq(category, btn) {
+      document.querySelectorAll('.faq-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      document.querySelectorAll('.faq-card').forEach(card => {
+        card.style.display = (category === 'all' || card.dataset.category === category) ? 'block' : 'none';
+      });
+    }
+    
+    // PDF
+    function openPdf(pdfId) {
+      currentPdfId = pdfId;
+      currentPdfPage = 0;
+      
+      const pdf = PDF_DATA[pdfId];
+      document.getElementById('pdf-title').textContent = pdf.title;
+      
+      updatePdfView();
+      showPage('page-pdf-viewer');
+    }
+    
+    function closePdf() {
+      showPage('page-documents');
+    }
+    
+    function updatePdfView() {
+      const pdf = PDF_DATA[currentPdfId];
+      document.getElementById('pdf-image').src = pdf.pages[currentPdfPage];
+      document.getElementById('pdf-current').textContent = currentPdfPage + 1;
+      document.getElementById('pdf-total').textContent = pdf.pages.length;
+      
+      document.getElementById('pdf-prev').disabled = currentPdfPage === 0;
+      document.getElementById('pdf-next').disabled = currentPdfPage === pdf.pages.length - 1;
+      
+      document.getElementById('pdf-dots').innerHTML = pdf.pages.map((_, i) => 
+        `<div class="pdf-dot ${i === currentPdfPage ? 'active' : ''}" onclick="goToPdfPage(${i})"></div>`
+      ).join('');
+    }
+    
+    function pdfPrev() {
+      if (currentPdfPage > 0) {
+        currentPdfPage--;
+        updatePdfView();
+      }
+    }
+    
+    function pdfNext() {
+      const pdf = PDF_DATA[currentPdfId];
+      if (currentPdfPage < pdf.pages.length - 1) {
+        currentPdfPage++;
+        updatePdfView();
+      }
+    }
+    
+    function goToPdfPage(page) {
+      currentPdfPage = page;
+      updatePdfView();
+    }
+    
+    // 初期化
+    initShinsyaOptions();
+    initRakunoriOptions();
+  </script>
+</body>
+</html>
