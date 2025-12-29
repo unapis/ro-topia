@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#E60012">
+  <title>ロートピア サービスアプリ</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    
+    :root {
+      --lotopia-orange: #F58220;
+      --lotopia-green: #8DC21F;
+      --lotopia-red: #E60012;
+      --lotopia-yellow: #FFD700;
+      --background: #FFFEF5;
+      --surface: #FFF9E6;
+      --foreground: #333333;
+      --muted: #666666;
+      --border: #E5D9C3;
+    }
+    
+    html, body {
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+      background: #1a1a1a;
+      min-height: 100vh;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    /* iPhoneフレーム */
+    .phone-container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 375px;
+      height: 812px;
+    }
+    
+    .phone-frame {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #1C1C1E;
+      border-radius: 50px;
+      padding: 14px;
+      box-shadow: 
+        0 0 0 2px #3A3A3C,
+        0 0 0 4px #1C1C1E,
+        0 30px 60px rgba(0,0,0,0.4);
+    }
+    
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      background: var(--background);
+      border-radius: 38px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    /* ノッチ（Dynamic Island） */
+    .notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 34px;
+      background: #000;
+      border-radius: 0 0 20px 20px;
+      z-index: 100;
+    }
+    
+    /* アプリ本体 */
+    .app {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: var(--background);
+    }
+    
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .main-content::-webkit-scrollbar { display: none; }
+    
+    /* ページ */
+    .page { display: none; min-height: 100%; }
+    .page.active { display: block; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    
+    /* ヘッダー（赤背景） */
+    .header {
+      background: var(--lotopia-red);
+      padding: 50px 24px 24px;
+    }
+    
+    .logo-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+    
+    .logo-box {
+      background: white;
+      border-radius: 12px;
+      padding: 8px 16px;
+      display: inline-flex;
+      align-items: center;
+    }
+    
+    .logo-img {
+      height: 28px;
+    }
+    
+    .header-subtitle {
+      text-align: center;
+      color: rgba(255,255,255,0.9);
+      font-size: 14px;
+    }
+    
+    /* 黄色バナー */
+    .banner {
+      background: var(--lotopia-yellow);
+      margin: 16px 0 0;
+      padding: 12px 20px;
+      border-radius: 12px;
+    }
+    
+    .banner-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+      text-align: center;
+    }
+    
+    .banner-subtitle {
+      font-size: 13px;
+      color: #555;
+      text-align: center;
+      margin-top: 4px;
+    }
+    
+    /* セクション */
+    .section {
+      padding: 20px 16px 0;
+    }
+    
+    .section-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    
+    .section-icon {
+      width: 20px;
+      height: 20px;
+      margin-right: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .section-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: var(--foreground);
+    }
+    
+    .section-link {
+      margin-left: auto;
+      font-size: 14px;
+      color: var(--lotopia-orange);
+    }
+    
+    /* クイックアクセスカード */
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    
+    .quick-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.15s, opacity 0.15s;
+    }
+    
+    .quick-card:active {
+      transform: scale(0.96);
+      opacity: 0.8;
+    }
+    
+    .quick-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      margin: 0 auto 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+    
+    .quick-label {
+      font-size: 14px;
+      font-weight: bold;
+      color: var(--foreground);
+    }
+    
+    .quick-sublabel {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    
+    /* 接客サポートカード */
+    .support-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    
+    .support-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.15s, opacity 0.15s;
+    }
+    
+    .support-card:active {
+      transform: scale(0.97);
+      opacity: 0.8;
+    }
+    
+    .support-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+    
+    .support-info {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .support-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--foreground);
+    }
+    
+    .support-subtitle {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    
+    .support-arrow {
+      color: var(--muted);
+      font-size: 16px;
+    }
+    
+    /* お知らせカード */
+    .news-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: transform 0.15s, opacity 0.15s;
+    }
+    
+    .news-card:active {
+      transform: scale(0.98);
+      opacity: 0.8;
+    }
+    
+    .news-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .news-badge {
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-right: 8px;
+    }
+    
+    .news-badge.campaign {
+      background: rgba(245, 130, 32, 0.15);
+      color: var(--lotopia-orange);
+    }
+    
+    .news-badge.info {
+      background: rgba(141, 194, 31, 0.15);
+      color: var(--lotopia-green);
+    }
+    
+    .news-new {
+      background: var(--lotopia-red);
+      color: white;
+      padding: 2px 6px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+    
+    .news-date {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    
+    .news-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--foreground);
+      margin-bottom: 4px;
+    }
+    
+    .news-desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    
+    /* タブバー */
+    .tab-bar {
+      display: flex;
+      background: rgba(255, 254, 245, 0.95);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-top: 1px solid var(--border);
+      padding: 8px 0 24px;
+    }
+    
+    .tab-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 4px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    
+    .tab-item:active {
+      opacity: 0.6;
+    }
+    
+    .tab-icon {
+      font-size: 24px;
+      margin-bottom: 2px;
+    }
+    
+    .tab-label {
+      font-size: 10px;
+      color: var(--muted);
+    }
+    
+    .tab-item.active .tab-label {
+      color: var(--lotopia-red);
+    }
+    
+    /* サブページヘッダー */
+    .sub-header {
+      background: var(--lotopia-red);
+      padding: 50px 16px 16px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .back-btn {
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 8px;
+      margin-left: -8px;
+    }
+    
+    .sub-title {
+      flex: 1;
+      text-align: center;
+      color: white;
+      font-size: 17px;
+      font-weight: 600;
+      margin-right: 32px;
+    }
+    
+    /* 見積もり */
+    .estimate-content {
+      padding: 20px 16px;
+    }
+    
+    .estimate-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: var(--foreground);
+      margin-bottom: 8px;
+    }
+    
+    .estimate-desc {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+    
+    .step-dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    
+    .step-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+    }
+    
+    .step-dot.active {
+      background: var(--lotopia-red);
+      width: 24px;
+      border-radius: 4px;
+    }
+    
+    .step-dot.done {
+      background: var(--lotopia-green);
+    }
+    
+    .option-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    
+    .option-card {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    
+    .option-card:active {
+      transform: scale(0.97);
+    }
+    
+    .option-card.selected {
+      border-color: var(--lotopia-red);
+      background: rgba(230, 0, 18, 0.05);
+    }
+    
+    .option-icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+    }
+    
+    .option-label {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--foreground);
+    }
+    
+    .option-sublabel {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    
+    /* 結果カード */
+    .result-card {
+      background: linear-gradient(135deg, var(--lotopia-red) 0%, #C50010 100%);
+      border-radius: 20px;
+      padding: 24px;
+      color: white;
+      margin-bottom: 20px;
+    }
+    
+    .result-label {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    
+    .result-price {
+      font-size: 40px;
+      font-weight: 800;
+    }
+    
+    .result-unit {
+      font-size: 16px;
+      font-weight: normal;
+      opacity: 0.9;
+    }
+    
+    .result-details {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 14px;
+    }
+    
+    /* シェアボタン */
+    .share-section {
+      text-align: center;
+      padding: 20px 0;
+    }
+    
+    .share-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--foreground);
+      margin-bottom: 16px;
+    }
+    
+    .share-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+    }
+    
+    .share-btn {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    
+    .share-btn:active {
+      transform: scale(0.9);
+    }
+    
+    .share-btn.line { background: #06C755; color: white; }
+    .share-btn.mail { background: #007AFF; color: white; }
+    .share-btn.other { background: var(--surface); border: 1px solid var(--border); }
+    
+    /* サービス一覧 */
+    .service-list {
+      padding: 16px;
+    }
+    
+    .service-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    
+    .service-header {
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+    
+    .service-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-right: 14px;
+    }
+    
+    .service-info { flex: 1; }
+    
+    .service-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--foreground);
+    }
+    
+    .service-desc {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    
+    .service-arrow {
+      color: var(--muted);
+      transition: transform 0.2s;
+    }
+    
+    .service-item.open .service-arrow {
+      transform: rotate(90deg);
+    }
+    
+    .service-detail {
+      display: none;
+      padding: 0 16px 16px;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    
+    .service-item.open .service-detail {
+      display: block;
+    }
+    
+    /* 資料一覧 */
+    .doc-list {
+      padding: 16px;
+    }
+    
+    .doc-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    
+    .doc-item:active {
+      transform: scale(0.98);
+    }
+    
+    .doc-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-right: 14px;
+    }
+    
+    .doc-info { flex: 1; }
+    
+    .doc-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--foreground);
+    }
+    
+    .doc-pages {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    
+    .doc-arrow {
+      color: var(--muted);
+    }
+    
+    /* PDFビューア */
+    .pdf-viewer {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .pdf-content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: var(--background);
+    }
+    
+    .pdf-image {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .pdf-nav {
+      background: var(--surface);
+      padding: 12px 16px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border);
+    }
+    
+    .pdf-btn {
+      background: var(--lotopia-red);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    
+    .pdf-btn:disabled {
+      background: var(--border);
+      color: var(--muted);
+    }
+    
+    .pdf-page {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--foreground);
+    }
+    
+    .pdf-dots {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px;
+      background: var(--surface);
+    }
+    
+    .pdf-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--border);
+    }
+    
+    .pdf-dot.active {
+      background: var(--lotopia-green);
+    }
+    
+    /* FAQ */
+    .faq-filter {
+      display: flex;
+      gap: 8px;
+      padding: 16px;
+      overflow-x: auto;
+    }
+    
+    .faq-filter::-webkit-scrollbar { display: none; }
+    
+    .filter-btn {
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      background: var(--surface);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    
+    .filter-btn.active {
+      background: var(--lotopia-red);
+      color: white;
+      border-color: var(--lotopia-red);
+    }
+    
+    .faq-list {
+      padding: 0 16px 16px;
+    }
+    
+    .faq-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    
+    .faq-q {
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+    
+    .faq-q-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--lotopia-red);
+      color: white;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+    
+    .faq-q-text {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--foreground);
+      line-height: 1.4;
+    }
+    
+    .faq-arrow {
+      color: var(--muted);
+      transition: transform 0.2s;
+    }
+    
+    .faq-item.open .faq-arrow {
+      transform: rotate(90deg);
+    }
+    
+    .faq-a {
+      display: none;
+      padding: 0 16px 16px;
+    }
+    
+    .faq-item.open .faq-a {
+      display: block;
+    }
+    
+    .faq-a-box {
+      background: rgba(141, 194, 31, 0.1);
+      padding: 14px;
+      border-radius: 10px;
+      display: flex;
+      gap: 10px;
+    }
+    
+    .faq-a-icon {
+      width: 24px;
+      height: 24px;
+      background: var(--lotopia-green);
+      color: white;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    
+    .faq-a-text {
+      font-size: 14px;
+      color: var(--foreground);
+      line-height: 1.6;
+    }
+    
+    /* スマホ対応 */
+    @media (max-width: 430px) {
+      html, body {
+        background: var(--background);
+      }
+      
+      .phone-container {
+        position: relative;
+        top: auto;
+        left: auto;
+        transform: none;
+        width: 100%;
+        height: 100vh;
+        height: 100dvh;
+      }
+      
+      .phone-frame {
+        background: none;
+        border-radius: 0;
+        padding: 0;
+        box-shadow: none;
+      }
+      
+      .phone-screen {
+        border-radius: 0;
+      }
+      
+      .notch {
+        display: none;
+      }
+      
+      .header {
+        padding-top: max(env(safe-area-inset-top), 20px);
+      }
+      
+      .sub-header {
+        padding-top: max(env(safe-area-inset-top), 20px);
+      }
+      
+      .tab-bar {
+        padding-bottom: max(env(safe-area-inset-bottom), 20px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="phone-container">
+    <div class="phone-frame">
+      <div class="phone-screen">
+        <div class="notch"></div>
+        
+        <div class="app">
+          <div class="main-content" id="mainContent">
+            
+            <!-- ホーム画面 -->
+            <div class="page active" id="page-home">
+              <div class="header">
+                <div class="logo-wrapper">
+                  <div class="logo-box">
+                    <svg class="logo-img" viewBox="0 0 160 28" fill="none">
+                      <path d="M8 4L16 24L24 4" stroke="#E60012" stroke-width="3" fill="none"/>
+                      <text x="32" y="20" font-family="Arial Black, sans-serif" font-size="18" font-weight="900" fill="#E60012">LOTOPIA</text>
+                    </svg>
+                  </div>
+                </div>
+                <div class="header-subtitle">社員向けサポートアプリ</div>
+                <div class="banner">
+                  <div class="banner-title">LET'S ENJOY CAR LIFE!</div>
+                  <div class="banner-subtitle">皆様のカーライフをご支援します</div>
+                </div>
+              </div>
+              
+              <!-- クイックアクセス -->
+              <div class="section">
+                <div class="section-header">
+                  <div class="section-icon">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                      <circle cx="10" cy="10" r="9" stroke="#8DC21F" stroke-width="2"/>
+                      <path d="M6 10L9 13L14 7" stroke="#8DC21F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <span class="section-title">クイックアクセス</span>
+                </div>
+                <div class="quick-grid">
+                  <div class="quick-card" onclick="showEstimate('shinsha')">
+                    <div class="quick-icon" style="background: rgba(141, 194, 31, 0.15);">📋</div>
+                    <div class="quick-label">新☆車生活</div>
+                    <div class="quick-sublabel">見積もり</div>
+                  </div>
+                  <div class="quick-card" onclick="showEstimate('rakunori')">
+                    <div class="quick-icon" style="background: rgba(230, 0, 18, 0.15);">🚗</div>
+                    <div class="quick-label">楽ノリ</div>
+                    <div class="quick-sublabel">レンタカー</div>
+                  </div>
+                  <div class="quick-card" onclick="switchTab('documents')">
+                    <div class="quick-icon" style="background: rgba(245, 130, 32, 0.15);">📁</div>
+                    <div class="quick-label">資料</div>
+                    <div class="quick-sublabel">データベース</div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 接客サポート -->
+              <div class="section">
+                <div class="section-header">
+                  <div class="section-icon">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                      <circle cx="10" cy="10" r="9" stroke="#8DC21F" stroke-width="2"/>
+                      <circle cx="10" cy="7" r="1.5" fill="#8DC21F"/>
+                      <path d="M10 10V15" stroke="#8DC21F" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                  </div>
+                  <span class="section-title">接客サポート</span>
+                </div>
+                <div class="support-grid">
+                  <div class="support-card" onclick="switchTab('services')">
+                    <div class="support-icon" style="background: rgba(141, 194, 31, 0.15);">
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <circle cx="10" cy="10" r="8" stroke="#8DC21F" stroke-width="2"/>
+                        <circle cx="10" cy="7" r="1" fill="#8DC21F"/>
+                        <path d="M10 10V14" stroke="#8DC21F" stroke-width="2" stroke-linecap="round"/>
+                      </svg>
+                    </div>
+                    <div class="support-info">
+                      <div class="support-title">サービス説明</div>
+                      <div class="support-subtitle">全サービスの詳細</div>
+                    </div>
+                    <span class="support-arrow">›</span>
+                  </div>
+                  <div class="support-card" onclick="showFAQ()">
+                    <div class="support-icon" style="background: rgba(245, 130, 32, 0.15);">
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <circle cx="10" cy="10" r="8" stroke="#F58220" stroke-width="2"/>
+                        <text x="10" y="14" text-anchor="middle" font-size="12" font-weight="bold" fill="#F58220">?</text>
+                      </svg>
+                    </div>
+                    <div class="support-info">
+                      <div class="support-title">よくある質問</div>
+                      <div class="support-subtitle">FAQ・回答集</div>
+                    </div>
+                    <span class="support-arrow">›</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- お知らせ -->
+              <div class="section">
+                <div class="section-header">
+                  <div class="section-icon">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                      <rect x="3" y="2" width="14" height="16" rx="2" stroke="#E60012" stroke-width="2"/>
+                      <line x1="6" y1="6" x2="14" y2="6" stroke="#E60012" stroke-width="2"/>
+                      <line x1="6" y1="10" x2="14" y2="10" stroke="#E60012" stroke-width="2"/>
+                      <line x1="6" y1="14" x2="10" y2="14" stroke="#E60012" stroke-width="2"/>
+                    </svg>
+                  </div>
+                  <span class="section-title">お知らせ</span>
+                  <span class="section-link">すべて見る</span>
+                </div>
+                
+                <div class="news-card">
+                  <div class="news-header">
+                    <span class="news-badge campaign">キャンペーン</span>
+                    <span class="news-new">NEW</span>
+                    <span class="news-date">2024/12/28</span>
+                  </div>
+                  <div class="news-title">年末年始キャンペーン実施中！</div>
+                  <div class="news-desc">新☆車生活 新規ご契約で最大3万円キャッシュバック</div>
+                </div>
+                
+                <div class="news-card">
+                  <div class="news-header">
+                    <span class="news-badge info">お知らせ</span>
+                    <span class="news-new">NEW</span>
+                    <span class="news-date">2024/12/20</span>
+                  </div>
+                  <div class="news-title">楽ノリレンタカー 冬季料金のお知らせ</div>
+                  <div class="news-desc">12/20〜1/10は繁忙期料金となります</div>
+                </div>
+              </div>
+              
+              <div style="height: 100px;"></div>
+            </div>
+            
+            <!-- 見積もり画面 -->
+            <div class="page" id="page-estimate">
+              <div class="sub-header">
+                <span class="back-btn" onclick="goBack()">‹ 戻る</span>
+                <span class="sub-title" id="estimateTitle">見積もり</span>
+              </div>
+              <div id="estimateContent"></div>
+            </div>
+            
+            <!-- サービス画面 -->
+            <div class="page" id="page-services">
+              <div class="sub-header">
+                <span class="back-btn" onclick="switchTab('home')">‹ 戻る</span>
+                <span class="sub-title">サービス一覧</span>
+              </div>
+              <div class="service-list" id="serviceList"></div>
+            </div>
+            
+            <!-- 資料画面 -->
+            <div class="page" id="page-documents">
+              <div class="sub-header">
+                <span class="back-btn" onclick="switchTab('home')">‹ 戻る</span>
+                <span class="sub-title">資料データベース</span>
+              </div>
+              <div class="doc-list" id="docList"></div>
+            </div>
+            
+            <!-- PDFビューア -->
+            <div class="page" id="page-pdf">
+              <div class="sub-header">
+                <span class="back-btn" onclick="goBack()">‹ 戻る</span>
+                <span class="sub-title" id="pdfTitle">資料</span>
+              </div>
+              <div class="pdf-viewer">
+                <div class="pdf-content">
+                  <img class="pdf-image" id="pdfImage" src="" alt="PDF">
+                </div>
+                <div class="pdf-dots" id="pdfDots"></div>
+                <div class="pdf-nav">
+                  <button class="pdf-btn" id="pdfPrev" onclick="pdfPrev()">‹ 前へ</button>
+                  <span class="pdf-page" id="pdfPage">1 / 10</span>
+                  <button class="pdf-btn" id="pdfNext" onclick="pdfNext()">次へ ›</button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- FAQ画面 -->
+            <div class="page" id="page-faq">
+              <div class="sub-header">
+                <span class="back-btn" onclick="goBack()">‹ 戻る</span>
+                <span class="sub-title">よくある質問</span>
+              </div>
+              <div class="faq-filter" id="faqFilter"></div>
+              <div class="faq-list" id="faqList"></div>
+            </div>
+            
+          </div>
+          
+          <!-- タブバー -->
+          <div class="tab-bar">
+            <div class="tab-item active" onclick="switchTab('home')" data-tab="home">
+              <div class="tab-icon">🏠</div>
+              <span class="tab-label">ホーム</span>
+            </div>
+            <div class="tab-item" onclick="switchTab('estimate-select')" data-tab="estimate">
+              <div class="tab-icon">📝</div>
+              <span class="tab-label">見積もり</span>
+            </div>
+            <div class="tab-item" onclick="switchTab('services')" data-tab="services">
+              <div class="tab-icon">🚗</div>
+              <span class="tab-label">サービス</span>
+            </div>
+            <div class="tab-item" onclick="switchTab('documents')" data-tab="documents">
+              <div class="tab-icon">📁</div>
+              <span class="tab-label">資料</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 状態
+    let currentPage = 'home';
+    let pageHistory = ['home'];
+    let estimateType = '';
+    let estimateStep = 0;
+    let estimateData = {};
+    let pdfId = '';
+    let pdfPage = 1;
+    
+    // データ
+    const PDF_DATA = {
+      'salesbook-2wd': { title: 'セールスブック均等払い【2WD】', pages: 19, folder: 'images/salesbook-2wd' },
+      'salesbook-4wd': { title: 'セールスブック均等払い【4WD】', pages: 19, folder: 'images/salesbook-4wd' },
+      'salesbook-text-2wd': { title: 'セールスブック文言【2WD】', pages: 10, folder: 'images/salesbook-text-2wd' },
+      'salesbook-text-4wd': { title: 'セールスブック文言【4WD】', pages: 10, folder: 'images/salesbook-text-4wd' }
+    };
+    
+    const SERVICES = [
+      { name: '新☆車生活', icon: '🚗', color: 'rgba(141, 194, 31, 0.15)', desc: '月々定額カーリース', detail: '頭金0円、月々定額で新車に乗れるカーリースサービスです。車検、税金、メンテナンス費用がすべて含まれているので、毎月の支出が一定で家計管理がしやすくなります。' },
+      { name: '楽ノリレンタカー', icon: '🚙', color: 'rgba(245, 130, 32, 0.15)', desc: '格安レンタカー', detail: '地域最安値クラスのレンタカーサービスです。軽自動車からワンボックスまで幅広い車種をご用意。24時間いつでもご予約可能。' },
+      { name: '車検・整備', icon: '🔧', color: 'rgba(141, 194, 31, 0.15)', desc: '安心の車検サービス', detail: '国家資格を持った整備士による確かな技術で、お客様の愛車を点検・整備いたします。車検は最短60分で完了。' },
+      { name: '保険サービス', icon: '🛡️', color: 'rgba(245, 130, 32, 0.15)', desc: '自動車保険の相談', detail: '複数の保険会社の商品を比較して、お客様に最適なプランをご提案。事故対応も24時間サポート。' },
+      { name: '買取・下取り', icon: '💰', color: 'rgba(230, 0, 18, 0.15)', desc: '高価買取実施中', detail: '他社より高く買い取ります！無料出張査定、即日現金払い可能。事故車・不動車も買取OK。' }
+    ];
+    
+    const FAQ_DATA = [
+      { category: '新☆車生活', q: '契約期間中に解約できますか？', a: '原則として中途解約はできませんが、やむを得ない事情がある場合は残リース料をお支払いいただくことで解約可能です。' },
+      { category: '新☆車生活', q: '走行距離に制限はありますか？', a: '月間走行距離の上限を設定しております（標準プラン：月1,000km）。超過した場合は追加料金が発生します。' },
+      { category: '楽ノリ', q: '当日予約は可能ですか？', a: 'はい、空車があれば当日予約も可能です。' },
+      { category: '車検', q: '車検の所要時間はどれくらいですか？', a: '通常の車検であれば最短60分で完了します。' }
+    ];
+    
+    const ESTIMATE = {
+      shinsha: {
+        title: '新☆車生活 見積もり',
+        steps: [
+          { title: 'プラン選択', options: [
+            { id: 'standard', label: 'スタンダード', sub: '月1,000km', icon: '🚗' },
+            { id: 'premium', label: 'プレミアム', sub: '月1,500km', icon: '✨' }
+          ]},
+          { title: 'メーカー選択', options: [
+            { id: 'toyota', label: 'トヨタ', icon: '🔵' },
+            { id: 'honda', label: 'ホンダ', icon: '🔴' },
+            { id: 'nissan', label: '日産', icon: '⚪' },
+            { id: 'suzuki', label: 'スズキ', icon: '🟡' }
+          ]},
+          { title: '車種選択', options: [
+            { id: 'compact', label: 'コンパクト', sub: '〜1,500cc', icon: '🚗' },
+            { id: 'sedan', label: 'セダン', sub: '〜2,000cc', icon: '🚘' },
+            { id: 'suv', label: 'SUV', sub: '〜2,500cc', icon: '🚙' },
+            { id: 'kei', label: '軽自動車', sub: '660cc', icon: '🛻' }
+          ]},
+          { title: 'メンテナンス', options: [
+            { id: 'full', label: 'フルメンテ', sub: '車検・点検込み', icon: '🔧' },
+            { id: 'light', label: 'ライト', sub: '車検のみ', icon: '🔩' }
+          ]}
+        ],
+        calc: (d) => {
+          let p = 25000;
+          if (d.plan === 'premium') p += 5000;
+          if (d.car === 'suv') p += 8000;
+          if (d.car === 'kei') p -= 8000;
+          if (d.maint === 'full') p += 3000;
+          return p;
+        }
+      },
+      rakunori: {
+        title: '楽ノリレンタカー 見積もり',
+        steps: [
+          { title: 'クラス選択', options: [
+            { id: 'kei', label: '軽自動車', sub: 'ワゴンR等', icon: '🚗' },
+            { id: 'compact', label: 'コンパクト', sub: 'フィット等', icon: '🚘' },
+            { id: 'standard', label: 'スタンダード', sub: 'プリウス等', icon: '🚙' },
+            { id: 'wagon', label: 'ワゴン', sub: 'ノア等', icon: '🚐' }
+          ]},
+          { title: '利用時間', options: [
+            { id: '6h', label: '6時間', icon: '⏱️' },
+            { id: '12h', label: '12時間', icon: '🕐' },
+            { id: '24h', label: '24時間', icon: '📅' },
+            { id: '48h', label: '48時間', icon: '📆' }
+          ]}
+        ],
+        calc: (d) => {
+          const p = { kei: { '6h': 3300, '12h': 4400, '24h': 5500, '48h': 9900 }, compact: { '6h': 4400, '12h': 5500, '24h': 6600, '48h': 11000 }, standard: { '6h': 5500, '12h': 6600, '24h': 8800, '48h': 15400 }, wagon: { '6h': 7700, '12h': 9900, '24h': 13200, '48h': 22000 } };
+          return p[d.class]?.[d.time] || 5500;
+        }
+      }
+    };
+    
+    // ページ表示
+    function showPage(id) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + id).classList.add('active');
+      currentPage = id;
+      document.getElementById('mainContent').scrollTop = 0;
+    }
+    
+    // タブ切り替え
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+      
+      if (tab === 'home') {
+        document.querySelector('[data-tab="home"]').classList.add('active');
+        pageHistory = ['home'];
+        showPage('home');
+      } else if (tab === 'estimate-select') {
+        document.querySelector('[data-tab="estimate"]').classList.add('active');
+        showEstimateSelect();
+      } else if (tab === 'services') {
+        document.querySelector('[data-tab="services"]').classList.add('active');
+        renderServices();
+        pageHistory = ['services'];
+        showPage('services');
+      } else if (tab === 'documents') {
+        document.querySelector('[data-tab="documents"]').classList.add('active');
+        renderDocs();
+        pageHistory = ['documents'];
+        showPage('documents');
+      }
+    }
+    
+    // 戻る
+    function goBack() {
+      if (pageHistory.length > 1) {
+        pageHistory.pop();
+        showPage(pageHistory[pageHistory.length - 1]);
+      } else {
+        switchTab('home');
+      }
+    }
+    
+    // 見積もり選択
+    function showEstimateSelect() {
+      document.getElementById('estimateTitle').textContent = '見積もり';
+      document.getElementById('estimateContent').innerHTML = `
+        <div class="estimate-content">
+          <div class="estimate-title">サービスを選択</div>
+          <div class="estimate-desc">見積もりを作成するサービスを選んでください</div>
+          <div class="option-grid">
+            <div class="option-card" onclick="showEstimate('shinsha')">
+              <div class="option-icon">🚗</div>
+              <div class="option-label">新☆車生活</div>
+              <div class="option-sublabel">カーリース</div>
+            </div>
+            <div class="option-card" onclick="showEstimate('rakunori')">
+              <div class="option-icon">🚙</div>
+              <div class="option-label">楽ノリ</div>
+              <div class="option-sublabel">レンタカー</div>
+            </div>
+          </div>
+        </div>
+      `;
+      pageHistory = ['estimate'];
+      showPage('estimate');
+    }
+    
+    // 見積もり開始
+    function showEstimate(type) {
+      estimateType = type;
+      estimateStep = 0;
+      estimateData = {};
+      document.getElementById('estimateTitle').textContent = ESTIMATE[type].title;
+      pageHistory.push('estimate');
+      showPage('estimate');
+      renderStep();
+    }
+    
+    // ステップ描画
+    function renderStep() {
+      const cfg = ESTIMATE[estimateType];
+      const step = cfg.steps[estimateStep];
+      
+      let dots = cfg.steps.map((_, i) => `<div class="step-dot ${i < estimateStep ? 'done' : ''} ${i === estimateStep ? 'active' : ''}"></div>`).join('');
+      let opts = step.options.map(o => `
+        <div class="option-card" onclick="selectOption('${o.id}')">
+          <div class="option-icon">${o.icon}</div>
+          <div class="option-label">${o.label}</div>
+          ${o.sub ? `<div class="option-sublabel">${o.sub}</div>` : ''}
+        </div>
+      `).join('');
+      
+      document.getElementById('estimateContent').innerHTML = `
+        <div class="estimate-content">
+          <div class="step-dots">${dots}</div>
+          <div class="estimate-title">${step.title}</div>
+          <div class="estimate-desc">STEP ${estimateStep + 1} / ${cfg.steps.length}</div>
+          <div class="option-grid">${opts}</div>
+        </div>
+      `;
+    }
+    
+    // オプション選択
+    function selectOption(id) {
+      const keys = estimateType === 'shinsha' ? ['plan', 'maker', 'car', 'maint'] : ['class', 'time'];
+      estimateData[keys[estimateStep]] = id;
+      estimateStep++;
+      
+      if (estimateStep >= ESTIMATE[estimateType].steps.length) {
+        showResult();
+      } else {
+        renderStep();
+      }
+    }
+    
+    // 結果表示
+    function showResult() {
+      const price = ESTIMATE[estimateType].calc(estimateData);
+      const monthly = estimateType === 'shinsha';
+      
+      document.getElementById('estimateContent').innerHTML = `
+        <div class="estimate-content">
+          <div class="result-card">
+            <div class="result-label">${monthly ? '月々のお支払い（税込）' : 'ご利用料金（税込）'}</div>
+            <div class="result-price">¥${price.toLocaleString()}<span class="result-unit">${monthly ? '/月' : ''}</span></div>
+          </div>
+          <div class="share-section">
+            <div class="share-title">お客様に共有</div>
+            <div class="share-buttons">
+              <div class="share-btn line" onclick="shareLine()">💬</div>
+              <div class="share-btn mail" onclick="shareMail()">✉️</div>
+              <div class="share-btn other" onclick="shareOther()">↗️</div>
+            </div>
+          </div>
+          <div style="padding: 20px 0;">
+            <button class="pdf-btn" style="width: 100%;" onclick="showEstimate('${estimateType}')">もう一度見積もる</button>
+          </div>
+        </div>
+      `;
+    }
+    
+    // シェア
+    function shareLine() { window.open('https://line.me/R/msg/text/?' + encodeURIComponent('ロートピアからのお見積もりです'), '_blank'); }
+    function shareMail() { window.location.href = 'mailto:?subject=' + encodeURIComponent('ロートピア お見積もり'); }
+    function shareOther() { if (navigator.share) navigator.share({ title: 'お見積もり', text: 'ロートピアからのお見積もりです' }); }
+    
+    // サービス
+    function renderServices() {
+      document.getElementById('serviceList').innerHTML = SERVICES.map((s, i) => `
+        <div class="service-item" id="svc-${i}">
+          <div class="service-header" onclick="document.getElementById('svc-${i}').classList.toggle('open')">
+            <div class="service-icon" style="background: ${s.color};">${s.icon}</div>
+            <div class="service-info">
+              <div class="service-name">${s.name}</div>
+              <div class="service-desc">${s.desc}</div>
+            </div>
+            <span class="service-arrow">›</span>
+          </div>
+          <div class="service-detail">${s.detail}</div>
+        </div>
+      `).join('');
+    }
+    
+    // 資料
+    function renderDocs() {
+      const docs = Object.entries(PDF_DATA).map(([id, d]) => ({ id, ...d }));
+      document.getElementById('docList').innerHTML = docs.map(d => `
+        <div class="doc-item" onclick="openPdf('${d.id}')">
+          <div class="doc-icon" style="background: rgba(230, 0, 18, 0.1);">📄</div>
+          <div class="doc-info">
+            <div class="doc-name">${d.title}</div>
+            <div class="doc-pages">${d.pages}ページ</div>
+          </div>
+          <span class="doc-arrow">›</span>
+        </div>
+      `).join('');
+    }
+    
+    // PDF
+    function openPdf(id) {
+      pdfId = id;
+      pdfPage = 1;
+      const d = PDF_DATA[id];
+      document.getElementById('pdfTitle').textContent = d.title;
+      updatePdf();
+      
+      let dots = '';
+      for (let i = 1; i <= d.pages; i++) dots += `<div class="pdf-dot ${i === 1 ? 'active' : ''}"></div>`;
+      document.getElementById('pdfDots').innerHTML = dots;
+      
+      pageHistory.push('pdf');
+      showPage('pdf');
+    }
+    
+    function updatePdf() {
+      const d = PDF_DATA[pdfId];
+      document.getElementById('pdfImage').src = `${d.folder}/${pdfPage.toString().padStart(2, '0')}.png`;
+      document.getElementById('pdfPage').textContent = `${pdfPage} / ${d.pages}`;
+      document.getElementById('pdfPrev').disabled = pdfPage === 1;
+      document.getElementById('pdfNext').disabled = pdfPage === d.pages;
+      document.querySelectorAll('.pdf-dot').forEach((dot, i) => dot.classList.toggle('active', i + 1 === pdfPage));
+    }
+    
+    function pdfPrev() { if (pdfPage > 1) { pdfPage--; updatePdf(); } }
+    function pdfNext() { if (pdfPage < PDF_DATA[pdfId].pages) { pdfPage++; updatePdf(); } }
+    
+    // FAQ
+    function showFAQ() {
+      const cats = ['すべて', ...new Set(FAQ_DATA.map(f => f.category))];
+      document.getElementById('faqFilter').innerHTML = cats.map((c, i) => `<div class="filter-btn ${i === 0 ? 'active' : ''}" onclick="filterFAQ('${c}')">${c}</div>`).join('');
+      renderFAQ('すべて');
+      pageHistory.push('faq');
+      showPage('faq');
+    }
+    
+    function filterFAQ(cat) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.textContent === cat));
+      renderFAQ(cat);
+    }
+    
+    function renderFAQ(cat) {
+      const list = cat === 'すべて' ? FAQ_DATA : FAQ_DATA.filter(f => f.category === cat);
+      document.getElementById('faqList').innerHTML = list.map((f, i) => `
+        <div class="faq-item" id="faq-${i}">
+          <div class="faq-q" onclick="document.getElementById('faq-${i}').classList.toggle('open')">
+            <div class="faq-q-icon">Q</div>
+            <div class="faq-q-text">${f.q}</div>
+            <span class="faq-arrow">›</span>
+          </div>
+          <div class="faq-a">
+            <div class="faq-a-box">
+              <div class="faq-a-icon">A</div>
+              <div class="faq-a-text">${f.a}</div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    // 初期化
+    renderServices();
+    renderDocs();
+  </script>
+</body>
+</html>
