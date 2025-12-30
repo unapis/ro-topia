@@ -42,7 +42,7 @@
     @media (min-width: 500px) {
       .app-container {
         width: 375px;
-        min-height: 812px;
+        height: 812px;
         max-height: 90vh;
         margin: 20px auto;
         border-radius: 40px;
@@ -50,6 +50,8 @@
         box-shadow: 0 25px 50px rgba(0,0,0,0.3);
         position: relative;
         background: var(--background);
+        display: flex;
+        flex-direction: column;
       }
       
       .app-container::before {
@@ -78,13 +80,22 @@
     .screen {
       display: none;
       flex-direction: column;
-      height: calc(100% - 70px);
+      flex: 1;
       overflow-y: auto;
+      overflow-x: hidden;
       padding-bottom: 80px;
+      -webkit-overflow-scrolling: touch;
     }
     
     .screen.active {
       display: flex;
+    }
+    
+    @media (min-width: 500px) {
+      .screen {
+        height: calc(812px - 70px);
+        max-height: calc(90vh - 70px);
+      }
     }
     
     /* タブバー */
